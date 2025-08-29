@@ -68,6 +68,12 @@ claudectl -h                 # Short help flag
 claudectl help               # Alternative help command
 ```
 
+**Manage CLAUDE.md:**
+```bash
+claudectl copy-claude-md     # Copy ~/.claude/CLAUDE.md to ~/.claudectl/CLAUDE.md
+claudectl edit-claude-md     # Edit the local ~/.claudectl/CLAUDE.md file
+```
+
 **Notes:**
 - Profile names are case-insensitive
 - All arguments after the profile name are passed through to `claude`
@@ -97,7 +103,15 @@ To add or edit account profile names:
 - **Default (Personal)**: uses standard `claude` behavior with no special config.
 - **Custom Account**: sets `CLAUDE_CONFIG_DIR=~/.claudectl/AccountName/` per session.
 - Every terminal gets its own isolated Claude profile environment.
-- Each profile directory links the global `~/.claude/CLAUDE.md` so all environments share the same reference.
+- **CLAUDE.md Linking**: Each profile directory links to either:
+  - `~/.claudectl/CLAUDE.md` (if you've copied it locally with `claudectl copy-claude-md`)
+  - `~/.claude/CLAUDE.md` (fallback to global file)
+
+**Managing CLAUDE.md:**
+- Use `claudectl copy-claude-md` to create a local copy that all profiles will use
+- Use `claudectl edit-claude-md` to edit the local copy
+- Local copy takes precedence over the global `~/.claude/CLAUDE.md`
+- This allows you to have profile-specific instructions while keeping accounts separate
 
 
 
@@ -114,6 +128,7 @@ To add or edit account profile names:
 - **CLI parameter pass-through** — arguments you pass to `claudectl` are forwarded to the `claude` command.
 - **Case-insensitive profiles** — `claudectl work`, `claudectl Work`, and `claudectl WORK` all work the same.
 - **Built-in help** — run `claudectl --help` for usage information and available profiles.
+- **Local CLAUDE.md management** — copy and edit a local CLAUDE.md that all profiles share.
 - **Safe to uninstall**:  
   Remove `/usr/local/bin/claudectl` and delete `~/.claudectl/`. Your Claude accounts remain unaffected.
 

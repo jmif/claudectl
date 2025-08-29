@@ -5,6 +5,7 @@ IFS=$'\n\t'
 ACCOUNTS_DIR="$HOME/.claudectl"
 SETTINGS_FILE="$ACCOUNTS_DIR/settings.json"
 GLOBAL_CLAUDE_MD="$HOME/.claude/CLAUDE.md"
+LOCAL_CLAUDE_MD="$ACCOUNTS_DIR/CLAUDE.md"
 
 # Colors for output
 RED='\033[0;31m'
@@ -42,18 +43,70 @@ get_account_names() {
     fi
 }
 
+# Function to copy global CLAUDE.md to local claudectl directory
+copy_claude_md() {
+    if [ ! -f "$GLOBAL_CLAUDE_MD" ]; then
+        echo "Error: Global CLAUDE.md not found at $GLOBAL_CLAUDE_MD"
+        echo "Make sure you have Claude Code installed and configured first."
+        exit 1
+    fi
+    
+    if [ ! -d "$ACCOUNTS_DIR" ]; then
+        echo "Error: Claudectl not set up. Run 'claudectl' first to initialize."
+        exit 1
+    fi
+    
+    if [ -f "$LOCAL_CLAUDE_MD" ]; then
+        echo "Warning: $LOCAL_CLAUDE_MD already exists."
+        echo "Do you want to overwrite it? (y/N): "
+        read -n1 -s choice
+        echo
+        if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
+            echo "Cancelled."
+            exit 0
+        fi
+    fi
+    
+    echo "Copying $GLOBAL_CLAUDE_MD to $LOCAL_CLAUDE_MD..."
+    cp "$GLOBAL_CLAUDE_MD" "$LOCAL_CLAUDE_MD"
+    echo "Success! All profiles will now use the local CLAUDE.md file."
+    echo "You can edit it with: claudectl edit-claude-md"
+}
+
+# Function to edit the local CLAUDE.md file
+edit_claude_md() {
+    if [ ! -f "$LOCAL_CLAUDE_MD" ]; then
+        echo "Error: Local CLAUDE.md not found at $LOCAL_CLAUDE_MD"
+        echo "Run 'claudectl copy-claude-md' first to create it."
+        exit 1
+    fi
+    
+    local editor_cmd="${EDITOR:-vim}"
+    echo "Opening local CLAUDE.md with $editor_cmd..."
+    if ! bash -lc "$editor_cmd \"$LOCAL_CLAUDE_MD\""; then
+        echo "Falling back to vim..."
+        vim "$LOCAL_CLAUDE_MD"
+    fi
+}
+
 # Function to show help
 show_help() {
     echo "claudectl - Claude Code Multi-Account Manager"
     echo ""
     echo "USAGE:"
     echo "  claudectl [PROFILE] [CLAUDE_ARGS...]"
+    echo "  claudectl [COMMAND]"
     echo ""
-    echo "EXAMPLES:"
+    echo "PROFILE EXAMPLES:"
     echo "  claudectl                    # Show interactive menu"
     echo "  claudectl Work               # Launch directly with Work profile"
     echo "  claudectl personal           # Launch with Personal (default) profile"
     echo "  claudectl Work --help        # Launch Work profile and pass --help to claude"
+    echo ""
+    echo "COMMANDS:"
+    echo "  copy-claude-md               # Copy ~/.claude/CLAUDE.md to ~/.claudectl/CLAUDE.md"
+    echo "  edit-claude-md               # Edit the local ~/.claudectl/CLAUDE.md file"
+    echo "  --help, -h, help             # Show this help"
     echo ""
     echo "PROFILES:"
     if [ -f "$SETTINGS_FILE" ]; then
@@ -109,8 +162,14 @@ launch_profile() {
         echo "Creating profile directory: $config_dir"
         mkdir -p "$config_dir"
     fi
-    # Link global CLAUDE.md into profile directory
-    ln -sf "$GLOBAL_CLAUDE_MD" "$config_dir/CLAUDE.md"
+    
+    # Link CLAUDE.md into profile directory (prefer local, fallback to global)
+    if [ -f "$LOCAL_CLAUDE_MD" ]; then
+        ln -sf "$LOCAL_CLAUDE_MD" "$config_dir/CLAUDE.md"
+    elif [ -f "$GLOBAL_CLAUDE_MD" ]; then
+        ln -sf "$GLOBAL_CLAUDE_MD" "$config_dir/CLAUDE.md"
+    fi
+    
     echo "Launching Claude Code CLI with $profile profile..."
     exec env CLAUDE_CONFIG_DIR="$config_dir" claude "$@"
 }
@@ -233,6 +292,20 @@ main() {
     if [ $# -gt 0 ] && [[ "$1" = "-h" || "$1" = "--help" || "$1" = "help" ]]; then
         show_help
         exit 0
+    fi
+    
+    # Check for special commands
+    if [ $# -gt 0 ]; then
+        case "$1" in
+            "copy-claude-md")
+                copy_claude_md
+                exit 0
+                ;;
+            "edit-claude-md")
+                edit_claude_md
+                exit 0
+                ;;
+        esac
     fi
     
     # Check if profile name was provided as argument
