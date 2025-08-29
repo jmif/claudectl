@@ -5,7 +5,7 @@
 This project creates a terminal command called `claudectl` that allows users to manage multiple Anthropic account profiles for Claude Code CLI. It enables running different Claude sessions simultaneously, each with different account configurations, without setting global environment variables.
 
 **Platform Support**: macOS and Linux
-**Repository**: https://github.com/anthropics/claudectl
+**Repository**: https://github.com/jmif/claudectl
 
 ## Current Project Status (August 2025)
 
@@ -162,7 +162,7 @@ claudectl/
 
 ## Usage Workflow
 
-1. **Installation**: Use curl-based installer: `sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/anthropics/claudectl/main/install.sh)"`
+1. **Installation**: Use curl-based installer: `sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmif/claudectl/main/install.sh)"`
 2. **First run**: Creates hidden directory and settings file automatically
 3. **Daily use**: Run `claudectl`, select account profile, Claude launches with that config
 4. **Account Setup**: If account profile hasn't logged in, Claude Code will prompt for Anthropic login
@@ -214,7 +214,7 @@ claudectl/
 
 **Current Installation Method**: 
 ```bash
-sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/anthropics/claudectl/main/install.sh)"
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmif/claudectl/main/install.sh)"
 ```
 
 **Usage**: Simply run `claudectl` command to see interactive menu.
