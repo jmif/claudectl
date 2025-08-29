@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
+IFS=$'\n\t'
 
-BIN_NAME="asterisk"
-REPO_URL="https://raw.githubusercontent.com/juddflamm/asterisk/main"
+BIN_NAME="claudectl"
+REPO_URL="https://raw.githubusercontent.com/anthropics/claudectl/main"
+USE_SUDO=false
 
-echo "Installing Asterisk..."
+echo "Installing claudectl..."
 
 # Choose install dir
 if [ -w "/usr/local/bin" ]; then
@@ -13,7 +15,7 @@ elif [ -d "/usr/local/bin" ] || [ ! -e "/usr/local/bin" ]; then
     # Try sudo if /usr/local/bin exists but not writable
     if command -v sudo >/dev/null 2>&1; then
         INSTALL_DIR="/usr/local/bin"
-        USE_SUDO="true"
+        USE_SUDO=true
     else
         INSTALL_DIR="$HOME/.local/bin"
     fi
@@ -24,7 +26,7 @@ fi
 # Create install dir if missing
 if [ ! -d "$INSTALL_DIR" ]; then
     echo "Creating $INSTALL_DIR..."
-    if [ "$USE_SUDO" = "true" ]; then
+    if [ "$USE_SUDO" = true ]; then
         sudo mkdir -p "$INSTALL_DIR"
     else
         mkdir -p "$INSTALL_DIR"
@@ -33,7 +35,7 @@ fi
 
 # Download binary
 echo "Downloading $BIN_NAME to $INSTALL_DIR..."
-if [ "$USE_SUDO" = "true" ]; then
+if [ "$USE_SUDO" = true ]; then
     curl -fsSL "$REPO_URL/$BIN_NAME" | sudo tee "$INSTALL_DIR/$BIN_NAME" >/dev/null
     sudo chmod +x "$INSTALL_DIR/$BIN_NAME"
 else
@@ -41,7 +43,7 @@ else
     chmod +x "$INSTALL_DIR/$BIN_NAME"
 fi
 
-echo "✅ Asterisk installed successfully to $INSTALL_DIR"
+echo "✅ claudectl installed successfully to $INSTALL_DIR"
 
 # PATH check
 IN_PATH=true
@@ -65,4 +67,4 @@ else
     echo "       $BIN_NAME"
 fi
 echo
-echo "📚 Documentation: https://github.com/juddflamm/asterisk"
+echo "📚 Documentation: https://github.com/anthropics/claudectl"
