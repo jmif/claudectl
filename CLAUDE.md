@@ -1,11 +1,11 @@
-# Asterisk - Claude Code Multi-Account Manager Project
+# Claudectl - Claude Code Multi-Account Manager Project
 
 ## Project Overview
 
-This project creates a terminal command called `asterisk` that allows users to manage multiple Anthropic account profiles for Claude Code CLI. It enables running different Claude sessions simultaneously, each with different account configurations, without setting global environment variables.
+This project creates a terminal command called `claudectl` that allows users to manage multiple Anthropic account profiles for Claude Code CLI. It enables running different Claude sessions simultaneously, each with different account configurations, without setting global environment variables.
 
 **Platform Support**: macOS and Linux
-**Repository**: https://github.com/juddflamm/asterisk
+**Repository**: https://github.com/anthropics/claudectl
 
 ## Current Project Status (August 2025)
 
@@ -33,10 +33,10 @@ This project creates a terminal command called `asterisk` that allows users to m
 - Briefly considered `*` (rejected - shell conflicts)
 - Tried `cc` (rejected - conflicts with C compiler)
 - Considered `claudex` (good but changed)
-- Final choice: `asterisk` (unique, memorable, no conflicts)
+- Final choice: `claudectl` (unique, memorable, no conflicts)
 
 ### Hidden Directory Structure
-- **Location**: `~/.asterisk/`
+- **Location**: `~/.claudectl/`
 - **Reasoning**: Hidden folder in user home directory, follows Unix conventions
 - **Contents**:
   - `settings.json` - Account configuration
@@ -84,22 +84,22 @@ This project creates a terminal command called `asterisk` that allows users to m
 - Personal (default) selection: `exec env -u CLAUDE_CONFIG_DIR claude "$@"`
 
 ### Parameter Pass-through
-**Decision**: All parameters passed to `asterisk` are forwarded to `claude`
+**Decision**: All parameters passed to `claudectl` are forwarded to `claude`
 - **Implementation**: Use `"$@"` to preserve all arguments
-- **Benefit**: Makes `asterisk` a complete drop-in wrapper for Claude CLI
+- **Benefit**: Makes `claudectl` a complete drop-in wrapper for Claude CLI
 
 ## Technical Implementation
 
 ### Core Components
 
-1. **Main Script** (`asterisk`):
+1. **Main Script** (`claudectl`):
    - Bash script with color-coded output
    - Interactive menu system with single-key input
    - JSON parsing (with fallback parsing if `jq` not available)
    - Automatic setup on first run
 
 2. **Setup Function** (`setup_accounts_dir()`):
-   - Creates `~/.asterisk/` directory
+   - Creates `~/.claudectl/` directory
    - Creates default `settings.json` with example accounts
    - Does NOT pre-create account directories
 
@@ -145,13 +145,13 @@ This project creates a terminal command called `asterisk` that allows users to m
 ## File Structure
 
 ```
-asterisk/
-├── asterisk               # Main executable script
+claudectl/
+├── claudectl               # Main executable script
 ├── example_settings.json  # Example settings file
 ├── README.md              # User documentation
 └── CLAUDE.md              # This project documentation
 
-~/.asterisk/  # Created on first run
+~/.claudectl/  # Created on first run
 ├── settings.json        # User's actual settings
 ├── Work/               # Created when "Work" first selected
 │   └── [Claude config files]
@@ -161,13 +161,13 @@ asterisk/
 
 ## Usage Workflow
 
-1. **Installation**: Use curl-based installer: `sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/juddflamm/asterisk/main/install.sh)"`
+1. **Installation**: Use curl-based installer: `sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/anthropics/claudectl/main/install.sh)"`
 2. **First run**: Creates hidden directory and settings file automatically
-3. **Daily use**: Run `asterisk`, select account profile, Claude launches with that config
+3. **Daily use**: Run `claudectl`, select account profile, Claude launches with that config
 4. **Account Setup**: If account profile hasn't logged in, Claude Code will prompt for Anthropic login
 5. **Multiple sessions**: Each terminal can run different account profiles simultaneously
 6. **Settings management**: Select "Edit settings.json" to modify account profile list
-7. **Uninstall**: Simply delete `asterisk` from `/usr/local/bin/` and optionally delete `~/.asterisk/`
+7. **Uninstall**: Simply delete `claudectl` from `/usr/local/bin/` and optionally delete `~/.claudectl/`
 
 ## Key Features Implemented
 
@@ -192,7 +192,7 @@ asterisk/
 2. **Architecture Design**: Hidden folder approach with settings file
 3. **Settings Format**: Evolved from complex objects to simple array
 4. **Directory Strategy**: Changed from pre-creation to lazy creation
-5. **Command Naming**: Multiple iterations to find conflict-free name (`assterix` → `asterisk`)
+5. **Command Naming**: Multiple iterations to find conflict-free name (`assterix` → `claudectl`)
 6. **Environment Variables**: Added explicit cleanup for default option
 7. **Parameter Handling**: Added full pass-through support
 8. **User Interface**: Removed colors, simplified to normal terminal output
@@ -213,10 +213,10 @@ asterisk/
 
 **Current Installation Method**: 
 ```bash
-sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/juddflamm/asterisk/main/install.sh)"
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/anthropics/claudectl/main/install.sh)"
 ```
 
-**Usage**: Simply run `asterisk` command to see interactive menu.
+**Usage**: Simply run `claudectl` command to see interactive menu.
 
 See `README.md` for complete documentation.
 

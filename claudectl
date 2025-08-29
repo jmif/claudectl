@@ -1,6 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
 
-ACCOUNTS_DIR="$HOME/.asterisk"
+ACCOUNTS_DIR="$HOME/.claudectl"
 SETTINGS_FILE="$ACCOUNTS_DIR/settings.json"
 
 # Colors for output
@@ -12,7 +14,7 @@ NC='\033[0m' # No Color
 
 # Function to create initial setup
 setup_accounts_dir() {
-    echo "Setting up Asterisk's config directory, $ACCOUNTS_DIR..."
+    echo "Setting up Claudectl's config directory, $ACCOUNTS_DIR..."
     mkdir -p "$ACCOUNTS_DIR"
     
     # Create default settings.json
@@ -42,7 +44,7 @@ get_account_names() {
 
 # Function to show account selection menu
 show_menu() {
-    echo "* Asterisk"
+    echo "* claudectl"
     echo "Written By Claude Code For Claude Code"
     echo "Select a profile to launch the Claude Code CLI"
     echo "=============================================="
