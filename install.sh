@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 BIN_NAME="claudectl"
-REPO_URL="https://raw.githubusercontent.com/anthropics/claudectl/main"
+REPO_URL="https://raw.githubusercontent.com/jmif/claudectl/main"
 USE_SUDO=false
 
 echo "Installing claudectl..."
@@ -67,4 +67,4 @@ else
     echo "       $BIN_NAME"
 fi
 echo
-echo "📚 Documentation: https://github.com/anthropics/claudectl"
+echo "📚 Documentation: https://github.com/jmif/claudectl"

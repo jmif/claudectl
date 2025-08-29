@@ -22,7 +22,7 @@ Perfect for developers, teams, consultants, and anyone juggling personal and pro
 
 For macOS & Linux:
 ```bash
-sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/anthropics/claudectl/main/install.sh)"
+sudo /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jmif/claudectl/main/install.sh)"
 ```
 
 Then just run:
