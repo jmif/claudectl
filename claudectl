@@ -73,6 +73,216 @@ copy_claude_md() {
     echo "You can edit it with: claudectl edit-claude-md"
 }
 
+# Function to check if a directory would create a circular link
+is_circular_link() {
+    local source_dir="$1"
+    local target_dir="$2"
+    
+    # Get absolute paths
+    local abs_source=$(cd "$source_dir" 2>/dev/null && pwd)
+    local abs_target=$(cd "$target_dir" 2>/dev/null && pwd)
+    
+    if [ -z "$abs_source" ] || [ -z "$abs_target" ]; then
+        return 1  # One of the paths doesn't exist, not circular
+    fi
+    
+    # Only circular if one directory is actually inside the other
+    # Check if target is inside source
+    case "$abs_target/" in
+        "$abs_source/"*) return 0 ;;  # Circular - target inside source
+    esac
+    
+    # Check if source is inside target  
+    case "$abs_source/" in
+        "$abs_target/"*) return 0 ;;  # Circular - source inside target
+    esac
+    
+    return 1  # Not circular
+}
+
+# Function to import global claude setup into a profile
+import_global() {
+    local profile="$1"
+    
+    if [ -z "$profile" ]; then
+        echo "Error: Profile name required."
+        echo "Usage: claudectl import-global PROFILE"
+        exit 1
+    fi
+    
+    # Check if profile exists in settings
+    local accounts=($(get_account_names))
+    local found=false
+    for account in "${accounts[@]}"; do
+        if [[ "$(echo "$account" | tr '[:upper:]' '[:lower:]')" = "$(echo "$profile" | tr '[:upper:]' '[:lower:]')" ]]; then
+            found=true
+            profile="$account" # Use the exact case from settings
+            break
+        fi
+    done
+    
+    if [ "$found" = false ]; then
+        echo "Error: Profile '$profile' not found in settings.json"
+        echo "Available profiles: $(IFS=', '; echo "${accounts[*]}")"
+        exit 1
+    fi
+    
+    local global_claude_dir="$HOME/.claude"
+    local profile_dir="$ACCOUNTS_DIR/$profile"
+    
+    if [ ! -d "$global_claude_dir" ]; then
+        echo "Error: Global Claude directory not found at $global_claude_dir"
+        echo "Make sure Claude Code is installed and configured first."
+        exit 1
+    fi
+    
+    # Check for circular links
+    if is_circular_link "$global_claude_dir" "$profile_dir"; then
+        echo "Error: Cannot import from $global_claude_dir to $profile_dir"
+        echo "This would create a circular reference."
+        exit 1
+    fi
+    
+    # Create profile directory if it doesn't exist
+    if [ ! -d "$profile_dir" ]; then
+        echo "Creating profile directory: $profile_dir"
+        mkdir -p "$profile_dir"
+    fi
+    
+    # Check if profile already has config files
+    if [ -f "$profile_dir/.claude.json" ]; then
+        echo "Warning: Profile '$profile' already has configuration files."
+        echo "This will overwrite existing configuration. Continue? (y/N): "
+        read -n1 -s choice
+        echo
+        if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
+            echo "Cancelled."
+            exit 0
+        fi
+    fi
+    
+    echo "Importing global Claude setup into profile '$profile'..."
+    
+    # Copy all items except CLAUDE.md (we handle that separately)
+    for item in "$global_claude_dir"/*; do
+        if [ -e "$item" ]; then  # exists (file or directory)
+            itemname=$(basename "$item")
+            if [ "$itemname" != "CLAUDE.md" ]; then
+                echo "Copying $itemname..."
+                # Remove existing file/directory if it exists
+                [ -e "$profile_dir/$itemname" ] && rm -rf "$profile_dir/$itemname"
+                
+                if [ -d "$item" ]; then
+                    cp -r "$item" "$profile_dir/"
+                else
+                    cp "$item" "$profile_dir/"
+                fi
+            fi
+        fi
+    done
+    
+    # Handle CLAUDE.md linking as usual
+    if [ -f "$LOCAL_CLAUDE_MD" ]; then
+        ln -sf "$LOCAL_CLAUDE_MD" "$profile_dir/CLAUDE.md"
+        echo "Linked local CLAUDE.md"
+    elif [ -f "$GLOBAL_CLAUDE_MD" ]; then
+        ln -sf "$GLOBAL_CLAUDE_MD" "$profile_dir/CLAUDE.md"
+        echo "Linked global CLAUDE.md"
+    fi
+    
+    echo "Success! Global Claude setup imported into profile '$profile'."
+    echo "You can now use: claudectl $profile"
+}
+
+# Function to create symlinks to global claude setup in a profile
+link_global() {
+    local profile="$1"
+    
+    if [ -z "$profile" ]; then
+        echo "Error: Profile name required."
+        echo "Usage: claudectl link-global PROFILE"
+        exit 1
+    fi
+    
+    # Check if profile exists in settings
+    local accounts=($(get_account_names))
+    local found=false
+    for account in "${accounts[@]}"; do
+        if [[ "$(echo "$account" | tr '[:upper:]' '[:lower:]')" = "$(echo "$profile" | tr '[:upper:]' '[:lower:]')" ]]; then
+            found=true
+            profile="$account" # Use the exact case from settings
+            break
+        fi
+    done
+    
+    if [ "$found" = false ]; then
+        echo "Error: Profile '$profile' not found in settings.json"
+        echo "Available profiles: $(IFS=', '; echo "${accounts[*]}")"
+        exit 1
+    fi
+    
+    local global_claude_dir="$HOME/.claude"
+    local profile_dir="$ACCOUNTS_DIR/$profile"
+    
+    if [ ! -d "$global_claude_dir" ]; then
+        echo "Error: Global Claude directory not found at $global_claude_dir"
+        echo "Make sure Claude Code is installed and configured first."
+        exit 1
+    fi
+    
+    # Check for circular links
+    if is_circular_link "$global_claude_dir" "$profile_dir"; then
+        echo "Error: Cannot link from $global_claude_dir to $profile_dir"
+        echo "This would create a circular reference."
+        exit 1
+    fi
+    
+    # Create profile directory if it doesn't exist
+    if [ ! -d "$profile_dir" ]; then
+        echo "Creating profile directory: $profile_dir"
+        mkdir -p "$profile_dir"
+    fi
+    
+    # Check if profile already has config files
+    if [ -f "$profile_dir/.claude.json" ] || [ "$(ls -A "$profile_dir" 2>/dev/null | grep -v CLAUDE.md | wc -l)" -gt 0 ]; then
+        echo "Warning: Profile '$profile' already has configuration files."
+        echo "This will create symlinks that may interfere with existing configuration. Continue? (y/N): "
+        read -n1 -s choice
+        echo
+        if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
+            echo "Cancelled."
+            exit 0
+        fi
+    fi
+    
+    echo "Creating symlinks to global Claude setup in profile '$profile'..."
+    
+    # Create symlinks for all items except CLAUDE.md (we handle that separately)
+    for item in "$global_claude_dir"/*; do
+        if [ -e "$item" ]; then  # exists (file or directory)
+            itemname=$(basename "$item")
+            if [ "$itemname" != "CLAUDE.md" ]; then
+                echo "Linking $itemname..."
+                # Remove existing file/link if it exists
+                [ -e "$profile_dir/$itemname" ] && rm -rf "$profile_dir/$itemname"
+                ln -sf "$item" "$profile_dir/"
+            fi
+        fi
+    done
+    
+    # Handle CLAUDE.md linking as usual
+    if [ -f "$LOCAL_CLAUDE_MD" ]; then
+        ln -sf "$LOCAL_CLAUDE_MD" "$profile_dir/CLAUDE.md"
+        echo "Linked local CLAUDE.md"
+    elif [ -f "$GLOBAL_CLAUDE_MD" ]; then
+        ln -sf "$GLOBAL_CLAUDE_MD" "$profile_dir/CLAUDE.md"
+        echo "Linked global CLAUDE.md"
+    fi
+    
+    echo "Success! Global Claude setup linked into profile '$profile'."
+    echo "You can now use: claudectl $profile"
+}
+
 # Function to edit the local CLAUDE.md file
 edit_claude_md() {
     if [ ! -f "$LOCAL_CLAUDE_MD" ]; then
@@ -106,6 +316,8 @@ show_help() {
     echo "COMMANDS:"
     echo "  copy-claude-md               # Copy ~/.claude/CLAUDE.md to ~/.claudectl/CLAUDE.md"
     echo "  edit-claude-md               # Edit the local ~/.claudectl/CLAUDE.md file"
+    echo "  import-global PROFILE        # Copy global Claude setup into a profile"
+    echo "  link-global PROFILE          # Create symlinks to global Claude setup in a profile"
     echo "  --help, -h, help             # Show this help"
     echo ""
     echo "PROFILES:"
@@ -303,6 +515,24 @@ main() {
                 ;;
             "edit-claude-md")
                 edit_claude_md
+                exit 0
+                ;;
+            "import-global")
+                if [ $# -lt 2 ]; then
+                    echo "Error: Profile name required."
+                    echo "Usage: claudectl import-global PROFILE"
+                    exit 1
+                fi
+                import_global "$2"
+                exit 0
+                ;;
+            "link-global")
+                if [ $# -lt 2 ]; then
+                    echo "Error: Profile name required."
+                    echo "Usage: claudectl link-global PROFILE"
+                    exit 1
+                fi
+                link_global "$2"
                 exit 0
                 ;;
         esac

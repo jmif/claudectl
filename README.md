@@ -74,6 +74,12 @@ claudectl copy-claude-md     # Copy ~/.claude/CLAUDE.md to ~/.claudectl/CLAUDE.m
 claudectl edit-claude-md     # Edit the local ~/.claudectl/CLAUDE.md file
 ```
 
+**Import/Link Global Setup:**
+```bash
+claudectl import-global Work # Copy global Claude config into Work profile  
+claudectl link-global Work   # Create symlinks to global Claude config in Work profile
+```
+
 **Notes:**
 - Profile names are case-insensitive
 - All arguments after the profile name are passed through to `claude`
@@ -113,6 +119,14 @@ To add or edit account profile names:
 - Local copy takes precedence over the global `~/.claude/CLAUDE.md`
 - This allows you to have profile-specific instructions while keeping accounts separate
 
+**Importing/Linking Global Setup:**
+- Use `claudectl import-global PROFILE` to copy your entire global Claude configuration into a specific profile
+- Use `claudectl link-global PROFILE` to create symlinks to your global Claude configuration in a specific profile
+- Import copies all files/directories, link creates symlinks (changes in global affect the profile)
+- Both import all settings, session data, and configuration from `~/.claude/`
+- Includes confirmation prompt if the profile already has configuration files
+- Circular link detection prevents creating invalid configurations
+
 
 
 ##  Requirements
@@ -129,6 +143,7 @@ To add or edit account profile names:
 - **Case-insensitive profiles** — `claudectl work`, `claudectl Work`, and `claudectl WORK` all work the same.
 - **Built-in help** — run `claudectl --help` for usage information and available profiles.
 - **Local CLAUDE.md management** — copy and edit a local CLAUDE.md that all profiles share.
+- **Global setup import/linking** — copy or symlink your existing Claude configuration into any profile.
 - **Safe to uninstall**:  
   Remove `/usr/local/bin/claudectl` and delete `~/.claudectl/`. Your Claude accounts remain unaffected.
 
