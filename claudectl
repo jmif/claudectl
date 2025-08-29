@@ -80,8 +80,12 @@ show_menu() {
     
     # Handle edit option (E or e)
     if [[ "$choice" = "E" || "$choice" = "e" ]]; then
-        echo "Opening settings.json in new VSCode window..."
-        code -n "$SETTINGS_FILE"
+        local editor_cmd="${EDITOR:-vim}"
+        echo "Opening settings.json with $editor_cmd..."
+        if ! bash -lc "$editor_cmd \"$SETTINGS_FILE\""; then
+            echo "Falling back to vim..."
+            vim "$SETTINGS_FILE"
+        fi
         exit 0
     fi
     
