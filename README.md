@@ -77,7 +77,7 @@ claudectl edit-claude-md     # Edit the local ~/.claudectl/CLAUDE.md file
 **Import/Link Global Setup:**
 ```bash
 claudectl import-global Work # Copy global Claude config into Work profile  
-claudectl link-global Work   # Create symlinks to global Claude config in Work profile
+claudectl link-global Work   # Make global Claude setup point to Work profile
 ```
 
 **Notes:**
@@ -121,11 +121,11 @@ To add or edit account profile names:
 
 **Importing/Linking Global Setup:**
 - Use `claudectl import-global PROFILE` to copy your entire global Claude configuration into a specific profile
-- Use `claudectl link-global PROFILE` to create symlinks to your global Claude configuration in a specific profile
-- Import copies all files/directories, link creates symlinks (changes in global affect the profile)
-- Both import all settings, session data, and configuration from `~/.claude/`
-- Includes confirmation prompt if the profile already has configuration files
-- Circular link detection prevents creating invalid configurations
+- Use `claudectl link-global PROFILE` to make your global Claude setup point to a specific profile (reverses control)
+- Import copies all files/directories, link makes global setup use the profile as its source
+- Import-global copies from `~/.claude/` into profile, link-global makes `~/.claude/` point to profile
+- Link-global backs up existing global config to `~/.claude.backup` before linking
+- Includes confirmation prompts and circular link detection for safety
 - **Important:** API keys and OAuth tokens are stored securely in the system keychain and cannot be copied between profiles. You'll need to authenticate each profile separately on first use.
 
 

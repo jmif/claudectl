@@ -204,7 +204,7 @@ import_global() {
     echo "You can now use: claudectl $profile"
 }
 
-# Function to create symlinks to global claude setup in a profile
+# Function to make global claude setup point to a claudectl profile
 link_global() {
     local profile="$1"
     
@@ -232,77 +232,60 @@ link_global() {
     fi
     
     local global_claude_dir="$HOME/.claude"
+    local global_config_file="$HOME/.claude.json"
     local profile_dir="$ACCOUNTS_DIR/$profile"
     
-    if [ ! -d "$global_claude_dir" ]; then
-        echo "Error: Global Claude directory not found at $global_claude_dir"
-        echo "Make sure Claude Code is installed and configured first."
+    if [ ! -d "$profile_dir" ]; then
+        echo "Error: Profile directory not found at $profile_dir"
+        echo "Create the profile first by running: claudectl $profile"
         exit 1
     fi
     
-    # Check for circular links
-    if is_circular_link "$global_claude_dir" "$profile_dir"; then
-        echo "Error: Cannot link from $global_claude_dir to $profile_dir"
+    # Check for circular links (reversed direction)
+    if is_circular_link "$profile_dir" "$global_claude_dir"; then
+        echo "Error: Cannot link from $profile_dir to $global_claude_dir"
         echo "This would create a circular reference."
         exit 1
     fi
     
-    # Create profile directory if it doesn't exist
-    if [ ! -d "$profile_dir" ]; then
-        echo "Creating profile directory: $profile_dir"
-        mkdir -p "$profile_dir"
+    # Warning about overriding global setup
+    echo "Warning: This will override your global Claude Code setup to point to profile '$profile'."
+    echo "Your existing global configuration will be backed up to $global_claude_dir.backup"
+    echo "Continue? (y/N): "
+    read -n1 -s choice
+    echo
+    if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
+        echo "Cancelled."
+        exit 0
     fi
     
-    # Check if profile already has config files (excluding just CLAUDE.md)
-    if [ -d "$profile_dir" ] && [ "$(ls -A "$profile_dir" 2>/dev/null | grep -v '^CLAUDE.md$' | wc -l)" -gt 0 ]; then
-        echo "Warning: Profile '$profile' already has configuration files."
-        echo "This will create symlinks that may interfere with existing configuration. Continue? (y/N): "
-        read -n1 -s choice
-        echo
-        if [[ "$choice" != "y" && "$choice" != "Y" ]]; then
-            echo "Cancelled."
-            exit 0
-        fi
+    # Backup existing global configuration
+    if [ -d "$global_claude_dir" ]; then
+        echo "Backing up existing global configuration..."
+        [ -d "$global_claude_dir.backup" ] && rm -rf "$global_claude_dir.backup"
+        mv "$global_claude_dir" "$global_claude_dir.backup"
     fi
     
-    echo "Creating symlinks to global Claude setup in profile '$profile'..."
-    
-    # Link the global .claude.json from home directory (contains onboarding state)
-    local global_config_file="$HOME/.claude.json"
     if [ -f "$global_config_file" ]; then
-        echo "Linking global .claude.json..."
-        # Remove existing file if it exists
-        [ -e "$profile_dir/.claude.json" ] && rm -f "$profile_dir/.claude.json"
-        ln -sf "$global_config_file" "$profile_dir/.claude.json"
+        echo "Backing up global .claude.json..."
+        cp "$global_config_file" "$global_config_file.backup"
+        rm "$global_config_file"
     fi
     
-    # Create symlinks for all items except CLAUDE.md (we handle that separately)
-    # Use portable globbing that works across all shells
-    for item in "$global_claude_dir"/* "$global_claude_dir"/.*; do
-        [ -e "$item" ] || continue  # Skip if glob didn't match
-        [ "$item" = "$global_claude_dir/." ] && continue   # Skip .
-        [ "$item" = "$global_claude_dir/.." ] && continue  # Skip ..
-        
-        itemname=$(basename "$item")
-        if [ "$itemname" != "CLAUDE.md" ]; then
-            echo "Linking $itemname..."
-            # Remove existing file/link if it exists
-            [ -e "$profile_dir/$itemname" ] && rm -rf "$profile_dir/$itemname"
-            ln -sf "$item" "$profile_dir/"
-        fi
-    done
+    echo "Linking global Claude setup to profile '$profile'..."
     
-    # Handle CLAUDE.md linking as usual
-    if [ -f "$LOCAL_CLAUDE_MD" ]; then
-        ln -sf "$LOCAL_CLAUDE_MD" "$profile_dir/CLAUDE.md"
-        echo "Linked local CLAUDE.md"
-    elif [ -f "$GLOBAL_CLAUDE_MD" ]; then
-        ln -sf "$GLOBAL_CLAUDE_MD" "$profile_dir/CLAUDE.md"
-        echo "Linked global CLAUDE.md"
+    # Create symlink for the main Claude directory
+    ln -sf "$profile_dir" "$global_claude_dir"
+    
+    # Create symlink for the global config file if it exists in the profile
+    if [ -f "$profile_dir/.claude.json" ]; then
+        echo "Linking global .claude.json to profile..."
+        ln -sf "$profile_dir/.claude.json" "$global_config_file"
     fi
     
-    echo "Success! Global Claude setup linked into profile '$profile'."
-    echo "You can now use: claudectl $profile"
+    echo "Success! Global Claude setup now points to profile '$profile'."
+    echo "Run 'claude' (without claudectl) to use this profile as global default."
+    echo "To restore: delete symlinks and restore from $global_claude_dir.backup"
 }
 
 # Function to edit the local CLAUDE.md file
@@ -339,7 +322,7 @@ show_help() {
     echo "  copy-claude-md               # Copy ~/.claude/CLAUDE.md to ~/.claudectl/CLAUDE.md"
     echo "  edit-claude-md               # Edit the local ~/.claudectl/CLAUDE.md file"
     echo "  import-global PROFILE        # Copy global Claude setup into a profile"
-    echo "  link-global PROFILE          # Create symlinks to global Claude setup in a profile"
+    echo "  link-global PROFILE          # Make global Claude setup point to a profile"
     echo "  --help, -h, help             # Show this help"
     echo ""
     echo "PROFILES:"
