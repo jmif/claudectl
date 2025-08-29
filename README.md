@@ -65,6 +65,7 @@ To add or edit account profile names:
 - **Default (Personal)**: uses standard `claude` behavior with no special config.
 - **Custom Account**: sets `CLAUDE_CONFIG_DIR=~/.claudectl/AccountName/` per session.
 - Every terminal gets its own isolated Claude profile environment.
+- Each profile directory links the global `~/.claude/CLAUDE.md` so all environments share the same reference.
 
 
 

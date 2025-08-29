@@ -41,6 +41,7 @@ This project creates a terminal command called `claudectl` that allows users to 
 - **Contents**:
   - `settings.json` - Account configuration
   - Individual account directories (created on-demand)
+  - Each account directory includes a symlink to the global `~/.claude/CLAUDE.md`
 
 ### Settings File Format
 **Final Decision**: Simple array structure

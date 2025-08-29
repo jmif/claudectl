@@ -4,6 +4,7 @@ IFS=$'\n\t'
 
 ACCOUNTS_DIR="$HOME/.claudectl"
 SETTINGS_FILE="$ACCOUNTS_DIR/settings.json"
+GLOBAL_CLAUDE_MD="$HOME/.claude/CLAUDE.md"
 
 # Colors for output
 RED='\033[0;31m'
@@ -126,6 +127,8 @@ show_menu() {
                 echo "Creating profile directory: $config_dir"
                 mkdir -p "$config_dir"
             fi
+            # Link global CLAUDE.md into profile directory
+            ln -sf "$GLOBAL_CLAUDE_MD" "$config_dir/CLAUDE.md"
             echo "Launching Claude Code CLI with $selected profile..."
             exec env CLAUDE_CONFIG_DIR="$config_dir" claude "$@"
         fi
