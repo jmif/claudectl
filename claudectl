@@ -149,8 +149,8 @@ import_global() {
         mkdir -p "$profile_dir"
     fi
     
-    # Check if profile already has config files
-    if [ -f "$profile_dir/.claude.json" ]; then
+    # Check if profile already has config files (excluding just CLAUDE.md)
+    if [ -d "$profile_dir" ] && [ "$(ls -A "$profile_dir" 2>/dev/null | grep -v '^CLAUDE.md$' | wc -l)" -gt 0 ]; then
         echo "Warning: Profile '$profile' already has configuration files."
         echo "This will overwrite existing configuration. Continue? (y/N): "
         read -n1 -s choice
@@ -164,19 +164,22 @@ import_global() {
     echo "Importing global Claude setup into profile '$profile'..."
     
     # Copy all items except CLAUDE.md (we handle that separately)
-    for item in "$global_claude_dir"/*; do
-        if [ -e "$item" ]; then  # exists (file or directory)
-            itemname=$(basename "$item")
-            if [ "$itemname" != "CLAUDE.md" ]; then
-                echo "Copying $itemname..."
-                # Remove existing file/directory if it exists
-                [ -e "$profile_dir/$itemname" ] && rm -rf "$profile_dir/$itemname"
-                
-                if [ -d "$item" ]; then
-                    cp -r "$item" "$profile_dir/"
-                else
-                    cp "$item" "$profile_dir/"
-                fi
+    # Use portable globbing that works across all shells
+    for item in "$global_claude_dir"/* "$global_claude_dir"/.*; do
+        [ -e "$item" ] || continue  # Skip if glob didn't match
+        [ "$item" = "$global_claude_dir/." ] && continue   # Skip .
+        [ "$item" = "$global_claude_dir/.." ] && continue  # Skip ..
+        
+        itemname=$(basename "$item")
+        if [ "$itemname" != "CLAUDE.md" ]; then
+            echo "Copying $itemname..."
+            # Remove existing file/directory if it exists
+            [ -e "$profile_dir/$itemname" ] && rm -rf "$profile_dir/$itemname"
+            
+            if [ -d "$item" ]; then
+                cp -r "$item" "$profile_dir/"
+            else
+                cp "$item" "$profile_dir/"
             fi
         fi
     done
@@ -243,8 +246,8 @@ link_global() {
         mkdir -p "$profile_dir"
     fi
     
-    # Check if profile already has config files
-    if [ -f "$profile_dir/.claude.json" ] || [ "$(ls -A "$profile_dir" 2>/dev/null | grep -v CLAUDE.md | wc -l)" -gt 0 ]; then
+    # Check if profile already has config files (excluding just CLAUDE.md)
+    if [ -d "$profile_dir" ] && [ "$(ls -A "$profile_dir" 2>/dev/null | grep -v '^CLAUDE.md$' | wc -l)" -gt 0 ]; then
         echo "Warning: Profile '$profile' already has configuration files."
         echo "This will create symlinks that may interfere with existing configuration. Continue? (y/N): "
         read -n1 -s choice
@@ -258,15 +261,18 @@ link_global() {
     echo "Creating symlinks to global Claude setup in profile '$profile'..."
     
     # Create symlinks for all items except CLAUDE.md (we handle that separately)
-    for item in "$global_claude_dir"/*; do
-        if [ -e "$item" ]; then  # exists (file or directory)
-            itemname=$(basename "$item")
-            if [ "$itemname" != "CLAUDE.md" ]; then
-                echo "Linking $itemname..."
-                # Remove existing file/link if it exists
-                [ -e "$profile_dir/$itemname" ] && rm -rf "$profile_dir/$itemname"
-                ln -sf "$item" "$profile_dir/"
-            fi
+    # Use portable globbing that works across all shells
+    for item in "$global_claude_dir"/* "$global_claude_dir"/.*; do
+        [ -e "$item" ] || continue  # Skip if glob didn't match
+        [ "$item" = "$global_claude_dir/." ] && continue   # Skip .
+        [ "$item" = "$global_claude_dir/.." ] && continue  # Skip ..
+        
+        itemname=$(basename "$item")
+        if [ "$itemname" != "CLAUDE.md" ]; then
+            echo "Linking $itemname..."
+            # Remove existing file/link if it exists
+            [ -e "$profile_dir/$itemname" ] && rm -rf "$profile_dir/$itemname"
+            ln -sf "$item" "$profile_dir/"
         fi
     done
     
@@ -413,9 +419,10 @@ show_menu() {
     
     # Add edit settings option
     echo "e) Edit settings.json"
+    echo "h) Show help"
     
     echo ""
-    echo "Press a key (1-$((i-1)), e, first letter, or Enter for Default):"
+    echo "Press a key (1-$((i-1)), e, h, first letter, or Enter for Default):"
     
     # Read single character without requiring enter
     read -n1 -s choice
@@ -429,6 +436,13 @@ show_menu() {
             echo "Falling back to vim..."
             vim "$SETTINGS_FILE"
         fi
+        exit 0
+    fi
+    
+    # Handle help option (H or h)
+    if [[ "$choice" = "H" || "$choice" = "h" ]]; then
+        echo ""
+        show_help
         exit 0
     fi
     
