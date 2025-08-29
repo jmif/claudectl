@@ -42,6 +42,78 @@ get_account_names() {
     fi
 }
 
+# Function to show help
+show_help() {
+    echo "claudectl - Claude Code Multi-Account Manager"
+    echo ""
+    echo "USAGE:"
+    echo "  claudectl [PROFILE] [CLAUDE_ARGS...]"
+    echo ""
+    echo "EXAMPLES:"
+    echo "  claudectl                    # Show interactive menu"
+    echo "  claudectl Work               # Launch directly with Work profile"
+    echo "  claudectl personal           # Launch with Personal (default) profile"
+    echo "  claudectl Work --help        # Launch Work profile and pass --help to claude"
+    echo ""
+    echo "PROFILES:"
+    if [ -f "$SETTINGS_FILE" ]; then
+        local accounts=($(get_account_names))
+        echo "  personal (default)           # Uses standard ~/.claude config"
+        for account in "${accounts[@]}"; do
+            if [ -n "$account" ]; then
+                printf "  %-28s # Uses ~/.claudectl/%s config\n" "$account" "$account"
+            fi
+        done
+    else
+        echo "  Run claudectl to set up profiles"
+    fi
+    echo ""
+    echo "NOTES:"
+    echo "  - Profile names are case-insensitive"
+    echo "  - All arguments after profile name are passed to claude"
+    echo "  - Use 'e' in interactive menu to edit profiles"
+    echo ""
+}
+
+# Function to launch a specific profile
+launch_profile() {
+    local profile="$1"
+    shift # Remove profile name from arguments
+    
+    # Handle "personal" or "default" profile
+    if [[ "$profile" = "personal" || "$profile" = "default" ]]; then
+        echo "Launching Claude Code CLI with Personal profile..."
+        exec env -u CLAUDE_CONFIG_DIR claude "$@"
+    fi
+    
+    # Check if profile exists in settings
+    local accounts=($(get_account_names))
+    local found=false
+    for account in "${accounts[@]}"; do
+        if [[ "$(echo "$account" | tr '[:upper:]' '[:lower:]')" = "$(echo "$profile" | tr '[:upper:]' '[:lower:]')" ]]; then
+            found=true
+            profile="$account" # Use the exact case from settings
+            break
+        fi
+    done
+    
+    if [ "$found" = false ]; then
+        echo "Error: Profile '$profile' not found in settings.json"
+        echo "Available profiles: Personal (default), $(IFS=', '; echo "${accounts[*]}")"
+        exit 1
+    fi
+    
+    # Launch the profile
+    local config_dir="$ACCOUNTS_DIR/$profile"
+    if [ ! -d "$config_dir" ]; then
+        echo "Creating profile directory: $config_dir"
+        mkdir -p "$config_dir"
+    fi
+    # Link global CLAUDE.md into profile directory
+    ln -sf "$GLOBAL_CLAUDE_MD" "$config_dir/CLAUDE.md"
+    echo "Launching Claude Code CLI with $profile profile..."
+    exec env CLAUDE_CONFIG_DIR="$config_dir" claude "$@"
+}
 
 # Function to show account selection menu
 show_menu() {
@@ -157,8 +229,19 @@ main() {
         echo ""
     fi
     
-    # Show menu
-    show_menu
+    # Check for help flags
+    if [ $# -gt 0 ] && [[ "$1" = "-h" || "$1" = "--help" || "$1" = "help" ]]; then
+        show_help
+        exit 0
+    fi
+    
+    # Check if profile name was provided as argument
+    if [ $# -gt 0 ] && [ "$1" != "" ]; then
+        launch_profile "$@"
+    else
+        # Show interactive menu
+        show_menu "$@"
+    fi
 }
 
 # Run main function

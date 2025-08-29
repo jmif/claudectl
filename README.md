@@ -41,6 +41,38 @@ claudectl
 
 
 
+##  Usage
+
+**Interactive Menu:**
+```bash
+claudectl                    # Show account selection menu
+```
+
+**Direct Profile Launch:**
+```bash
+claudectl Work               # Launch directly with Work profile
+claudectl personal           # Launch with Personal (default) profile
+claudectl alternate          # Launch with alternate profile
+```
+
+**Pass Arguments to Claude:**
+```bash
+claudectl Work --help        # Launch Work profile and pass --help to claude
+claudectl personal --version # Launch personal profile with --version
+```
+
+**Get Help:**
+```bash
+claudectl --help             # Show usage information
+claudectl -h                 # Short help flag
+claudectl help               # Alternative help command
+```
+
+**Notes:**
+- Profile names are case-insensitive
+- All arguments after the profile name are passed through to `claude`
+- Use the interactive menu's "e" option to edit account profiles
+
 ##  Configuration
 
 To add or edit account profile names:
@@ -78,7 +110,10 @@ To add or edit account profile names:
 
 ##  Additional Features
 
+- **Direct profile launch** — skip the interactive menu by specifying a profile name: `claudectl Work`
 - **CLI parameter pass-through** — arguments you pass to `claudectl` are forwarded to the `claude` command.
+- **Case-insensitive profiles** — `claudectl work`, `claudectl Work`, and `claudectl WORK` all work the same.
+- **Built-in help** — run `claudectl --help` for usage information and available profiles.
 - **Safe to uninstall**:  
   Remove `/usr/local/bin/claudectl` and delete `~/.claudectl/`. Your Claude accounts remain unaffected.
 
