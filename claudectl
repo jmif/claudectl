@@ -163,6 +163,13 @@ import_global() {
     
     echo "Importing global Claude setup into profile '$profile'..."
     
+    # Copy the global .claude.json from home directory (contains onboarding state)
+    local global_config_file="$HOME/.claude.json"
+    if [ -f "$global_config_file" ]; then
+        echo "Copying global .claude.json..."
+        cp "$global_config_file" "$profile_dir/.claude.json"
+    fi
+    
     # Copy all items except CLAUDE.md (we handle that separately)
     # Use portable globbing that works across all shells
     for item in "$global_claude_dir"/* "$global_claude_dir"/.*; do
@@ -260,6 +267,15 @@ link_global() {
     
     echo "Creating symlinks to global Claude setup in profile '$profile'..."
     
+    # Link the global .claude.json from home directory (contains onboarding state)
+    local global_config_file="$HOME/.claude.json"
+    if [ -f "$global_config_file" ]; then
+        echo "Linking global .claude.json..."
+        # Remove existing file if it exists
+        [ -e "$profile_dir/.claude.json" ] && rm -f "$profile_dir/.claude.json"
+        ln -sf "$global_config_file" "$profile_dir/.claude.json"
+    fi
+    
     # Create symlinks for all items except CLAUDE.md (we handle that separately)
     # Use portable globbing that works across all shells
     for item in "$global_claude_dir"/* "$global_claude_dir"/.*; do
@@ -343,6 +359,8 @@ show_help() {
     echo "  - Profile names are case-insensitive"
     echo "  - All arguments after profile name are passed to claude"
     echo "  - Use 'e' in interactive menu to edit profiles"
+    echo "  - import-global/link-global copy config but not API keys (stored in keychain)"
+    echo "  - Each profile requires separate authentication on first use"
     echo ""
 }
 

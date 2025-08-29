@@ -126,6 +126,7 @@ To add or edit account profile names:
 - Both import all settings, session data, and configuration from `~/.claude/`
 - Includes confirmation prompt if the profile already has configuration files
 - Circular link detection prevents creating invalid configurations
+- **Important:** API keys and OAuth tokens are stored securely in the system keychain and cannot be copied between profiles. You'll need to authenticate each profile separately on first use.
 
 
 
